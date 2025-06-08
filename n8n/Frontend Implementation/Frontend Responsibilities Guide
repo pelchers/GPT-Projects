@@ -1,0 +1,119 @@
+# 💻 Frontend Responsibilities Guide
+
+This guide details frontend responsibilities, outlining primary files, interactions, state management, and integration points with your backend and external services.
+
+---
+
+## ✅ Frontend Responsibilities Overview
+
+Your frontend (built with **Vite + React + React-Query**) manages the following critical tasks:
+
+* **User Interface & Interaction** (chat UI, slash commands, navigation)
+* **State & Data Management** (React-Query caching, global state)
+* **API Integration** (via REST API endpoints & hooks)
+* **Authentication Management** (JWT & OAuth via hooks)
+* **Real-time Updates Handling** (WebSockets integration)
+* **File Upload Interface & Management** (frontend upload logic)
+* **Error Handling & User Feedback** (toast notifications, validations)
+
+---
+
+## 📂 Core Frontend Structure
+
+```
+client/
+├── Dockerfile
+├── package.json
+└── src/
+    ├── components/
+    │   ├── layout/
+    │   ├── chat/
+    │   │   ├── ChatWindow.tsx          # chat UI & message rendering
+    │   │   ├── MessageInput.tsx        # slash-command & message input handling
+    │   │   ├── ActionButtons.tsx       # execution buttons (e.g., /new-doc)
+    │   ├── notifications/
+    │   │   └── ToastNotifications.tsx  # error/success feedback
+    ├── hooks/
+    │   ├── useChatApi.ts               # API interactions
+    │   ├── useAuth.ts                  # auth state management
+    ├── lib/
+    │   ├── queryClient.ts              # React-Query instance & caching
+    │   ├── api.ts                      # REST API helper functions
+    │   ├── auth.ts                     # JWT & OAuth management
+    ├── pages/
+    │   ├── chat.tsx                    # main chat page
+    │   ├── login.tsx                   # authentication pages
+    │   └── register.tsx
+    ├── App.tsx
+    └── main.tsx
+```
+
+---
+
+## ⚙️ Detailed Frontend Responsibilities
+
+| Responsibility                         | Explanation                                    | Files Involved                                            | External Integrations               |
+| -------------------------------------- | ---------------------------------------------- | --------------------------------------------------------- | ----------------------------------- |
+| **User Interface & Interaction**       | Chat UI rendering, navigation, slash-commands. | `ChatWindow.tsx`, `MessageInput.tsx`, `ActionButtons.tsx` | OpenAI (slash-command processing)   |
+| **State & Data Management**            | Efficient state handling, caching of API data. | `queryClient.ts`, React-Query hooks                       | API endpoints via React-Query hooks |
+| **API Integration**                    | Secure, consistent API communication.          | `useChatApi.ts`, `api.ts`                                 | REST API (Express backend)          |
+| **Authentication Management**          | OAuth & JWT authentication state management.   | `useAuth.ts`, `auth.ts`                                   | OAuth providers, JWT                |
+| **Real-time Updates Handling**         | WebSocket integration for live data updates.   | `ChatWindow.tsx`, WebSocket hooks                         | WebSocket server (Express WS)       |
+| **File Upload Interface & Management** | Frontend logic for user-driven file uploads.   | `MessageInput.tsx`, `api.ts`                              | Storage provider via backend        |
+| **Error Handling & User Feedback**     | Immediate user feedback & error display.       | `ToastNotifications.tsx`, error hooks                     | None (frontend UI feedback)         |
+
+---
+
+## 🚀 Frontend to Backend Integration Flow
+
+```
+Frontend Component (MessageInput.tsx)
+    │
+    └─ useChatApi.ts (hook)
+          └─ api.ts (REST API calls)
+                │ HTTP Request
+                ▼
+Backend (Express API routes)
+                │ HTTP Response
+                ▼
+api.ts
+          │ Updates React-Query Cache
+          ▼
+Frontend Component re-render & UI update
+```
+
+---
+
+## 📌 External Services Managed by Frontend
+
+* **OpenAI GPT-4:** Slash-command inputs, conversational interactions.
+* **OAuth Providers (Google, GitHub):** User authentication flows.
+* **WebSocket Server:** Real-time message & notification updates.
+
+---
+
+## 📗 Summary of Frontend's Core Value
+
+* **User-Centric Interface:** Ensures responsive, intuitive UI for user interactions.
+* **Efficient State Management:** Optimizes caching and data management for performance.
+* **Secure & Reliable API Integration:** Consistent and secure data transactions.
+* **Real-Time Responsiveness:** Enhances user experience via immediate updates and interactions.
+* **Flexible & Scalable Design:** Modular components easily extendable and maintainable.
+
+---
+
+## ✅ Corollary: Frontend and Backend Integration Value
+
+* **Clear Responsibility Separation:** Frontend handles user interaction & display logic; backend manages data and business logic.
+* **Operational Efficiency:** Minimizes manual intervention via automated interactions and caching.
+* **User Experience:** Real-time responsiveness and immediate feedback loops.
+* **Adaptability and Scalability:** Modular frontend structure allows easy scaling and component reuse.
+
+---
+
+## 🚦 Recommended Next Steps:
+
+* Create detailed React Component Structuring Guide (chat UI patterns).
+* Develop clear React-Query Caching Strategy Guide.
+* Clearly document API endpoints and data contracts.
+* Prepare visual flow diagrams for key frontend interactions and state changes.

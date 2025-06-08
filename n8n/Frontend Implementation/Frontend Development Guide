@@ -1,0 +1,123 @@
+# 💻 Frontend Development Guide
+
+This guide provides best practices and structural guidelines for building robust, performant, and maintainable frontend components and data-fetching strategies in your React + React-Query application.
+
+---
+
+## 📌 React Component Structuring (Chat UI Patterns)
+
+### ✅ Chat Component Hierarchy
+
+Clearly structured chat components for maximum maintainability and scalability:
+
+```
+ChatPage (pages/chat.tsx)
+│
+├── Layout Component
+│   ├── Header Component (user profile, navigation)
+│   ├── Sidebar Component (project switcher, file listings)
+│   └── Main Content Component
+│        └── ChatWindow.tsx
+│             ├── MessageList.tsx
+│             │   ├── MessageItem.tsx (individual messages, files)
+│             │   └── FilePreview.tsx (embedded file previews)
+│             └── MessageInput.tsx (slash-command interface)
+│                  └── ActionButtons.tsx (commands like /new-doc)
+```
+
+### ✅ Key Component Responsibilities
+
+* **ChatWindow\.tsx:** Central orchestrator; manages state and data flow to subcomponents.
+* **MessageList.tsx:** Efficient rendering of messages and handling scroll/load behavior.
+* **MessageItem.tsx:** Atomic UI unit handling individual message content, states, and interactions.
+* **MessageInput.tsx:** Captures input, handles slash commands, and interfaces with API hooks.
+* **ActionButtons.tsx:** Provides intuitive, actionable UI elements tied to specific slash-commands.
+
+### ✅ Best Practices
+
+* **Atomic Design:** Structure components from small reusable atoms upwards.
+* **Separation of Concerns:** Clearly isolate data fetching (via hooks), presentation logic, and user interactions.
+* **Optimized Rendering:** Utilize `React.memo`, `useCallback`, and `useMemo`.
+* **Error Boundaries & Validation:** Encapsulate components within error boundaries; validate inputs rigorously.
+
+---
+
+## 📌 React-Query Caching Strategy Guide
+
+React-Query significantly enhances performance and responsiveness through efficient caching.
+
+### ✅ General Setup
+
+Initialize your global React-Query client for consistent caching strategies:
+
+```typescript
+// queryClient.ts
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+```
+
+---
+
+### ✅ Data Fetching Patterns
+
+Utilize custom hooks for clear separation and reuse:
+
+```typescript
+// useChatMessages.ts
+import { useQuery } from '@tanstack/react-query';
+import api from '../lib/api';
+
+export function useChatMessages(chatId: string) {
+  return useQuery(['chatMessages', chatId], () => api.getChatMessages(chatId), {
+    enabled: !!chatId,
+  });
+}
+```
+
+---
+
+### ✅ Cache Invalidation & Refetching
+
+Explicitly invalidate caches after mutations:
+
+```typescript
+// useSendMessage.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../lib/api';
+
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+  
+  return useMutation(api.sendMessage, {
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(['chatMessages', variables.chatId]);
+    },
+  });
+}
+```
+
+---
+
+### ✅ Best Practices for React-Query
+
+* **Consistent Query Keys:** Clearly defined, structured query keys.
+* **Optimized Cache Lifetimes:** Adjust based on data sensitivity.
+* **Selective Refetching:** Avoid unnecessary refetches; fine-tune refetch options.
+* **Error & Loading States:** Clearly handle loading/error states to improve UX.
+
+---
+
+## 📊 Recommended Next Steps
+
+* Implement and test outlined React component patterns in your chat UI.
+* Document and verify React-Query caching strategies through testing.
+* Develop visual flow diagrams demonstrating React-Query state changes and component interactions.
