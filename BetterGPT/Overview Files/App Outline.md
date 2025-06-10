@@ -176,6 +176,243 @@ The `dev-playground` directory serves as a development environment for:
 * All successful prototypes must be implemented directly in the main application
 * Clear documentation required for any playground experiments
 
+### 2.6 WYSIWYG Editor Integration (TipTap)
+
+```mermaid
+graph TD
+    A[TipTap Editor] -->|Uses| B[Y.js]
+    B -->|Enables| C[Real-time Collab]
+    A -->|Integrates| D[AI Features]
+    D -->|Provides| E[Suggestions]
+    A -->|Stores| F[Document State]
+    F -->|Syncs| G[Database]
+```
+
+* **TipTap** chosen for document-first architecture and Y.js integration
+* Real-time collaboration via WebSocket + Y.js CRDT
+* Custom extensions for AI command integration
+* Markdown import/export with full formatting support
+* Version history and collaborative annotations
+
+Key Editor Features:
+* Slash-command integration (`/new-doc`, `/outline`)
+* AI-assisted editing and suggestions
+* Real-time cursor presence and user awareness
+* Document versioning and change tracking
+* Rich text formatting with markdown support
+
+```typescript
+// Example TipTap Integration in ChatWindow.tsx
+const Editor = ({ docId, user }) => {
+  const ydoc = new Y.Doc()
+  const provider = new WebsocketProvider(
+    'ws://localhost:1234',
+    docId,
+    ydoc
+  )
+  
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Collaboration.configure({
+        document: ydoc,
+      }),
+      AICommands.configure({
+        endpoint: '/api/ai/suggest'
+      })
+    ],
+  })
+
+  return <EditorContent editor={editor} />
+}
+```
+
+Required Dependencies:
+```json
+{
+  "dependencies": {
+    "@tiptap/react": "^2.1.0",
+    "@tiptap/starter-kit": "^2.1.0",
+    "@tiptap/extension-collaboration": "^2.1.0",
+    "@tiptap/extension-collaboration-cursor": "^2.1.0",
+    "yjs": "^13.6.0",
+    "y-websocket": "^1.5.0"
+  }
+}
+```
+
+### 2.7 Code Features & Monaco Integration
+
+```mermaid
+graph TD
+    A[Code Input] -->|Parse| B[AST Service]
+    B -->|Index| C[Vector DB]
+    B -->|Analyze| D[Context Builder]
+    D -->|Enhance| E[AI Prompt]
+    E -->|Generate| F[Code Output]
+    
+    subgraph "Editor Integration"
+        G[Monaco Editor] -->|Provides| H[Advanced Editing]
+        H -->|Enables| I[IntelliSense]
+        G -->|Handles| J[Git Diffs]
+    end
+```
+
+* **Monaco Editor** for advanced code editing and IntelliSense
+* Semantic code search via pgvector embeddings
+* Git integration for version control and review
+* AI-powered code generation and review
+
+Key Features:
+* Language-aware code completion
+* Symbol navigation and search
+* Real-time error detection
+* Git diff viewing and PR reviews
+* AI-assisted code generation
+
+```typescript
+// Example Monaco Integration with TipTap
+const CodeBlockWithMonaco = Extension.create({
+  name: 'codeBlockMonaco',
+
+  addOptions() {
+    return {
+      languageDetection: true,
+      defaultLanguage: 'typescript'
+    };
+  },
+
+  addNodeView() {
+    return ({ node, getPos }) => {
+      const dom = document.createElement('div');
+      
+      const editor = <MonacoEditorView
+        height="200px"
+        language={node.attrs.language}
+        value={node.textContent}
+        onChange={(value) => {
+          // Update TipTap content
+          const pos = getPos();
+          const transaction = this.editor.state.tr.setNodeMarkup(
+            pos,
+            undefined,
+            { ...node.attrs, content: value }
+          );
+          this.editor.view.dispatch(transaction);
+        }}
+        options={{
+          minimap: { enabled: false },
+          lineNumbers: 'on',
+          scrollBeyondLastLine: false,
+          automaticLayout: true
+        }}
+      />;
+
+      return {
+        dom,
+        contentDOM: dom,
+        ignoreMutation: () => true,
+        update: (node) => {
+          if (node.type.name !== 'codeBlockMonaco') return false;
+          editor.setValue(node.textContent);
+          return true;
+        }
+      };
+    };
+  }
+});
+```
+
+Required Dependencies:
+```json
+{
+  "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "monaco-editor": "^0.45.0",
+    "simple-git": "^3.20.0",
+    "@octokit/rest": "^19.0.0",
+    "drizzle-orm": "^0.28.0",
+    "@neondatabase/serverless": "^0.6.0"
+  }
+}
+```
+
+### 2.8 Semantic Code Search
+
+```mermaid
+graph TD
+    A[Search Query] -->|Process| B[Search Service]
+    B -->|Vector| C[pgvector]
+    B -->|Parse| D[AST]
+    D -->|Extract| E[Symbols]
+    E -->|Index| F[Search Index]
+    F -->|Match| G[Results]
+```
+
+* Semantic code search powered by pgvector
+* Symbol extraction and indexing
+* Context-aware search results
+* Integration with OpenAI embeddings
+
+```typescript
+// Example Search Implementation
+export class SearchService {
+  private openai: OpenAIService;
+
+  async searchCode(query: string): Promise<SearchResult[]> {
+    const embedding = await this.openai.createEmbedding(query);
+    
+    return db
+      .select({
+        filePath: codeEmbeddings.filePath,
+        symbolName: codeEmbeddings.symbolName,
+        similarity: sql`1 - (embedding <=> ${embedding})`
+      })
+      .from(codeEmbeddings)
+      .orderBy(sql`similarity DESC`)
+      .limit(10);
+  }
+}
+```
+
+### 2.9 Version Control Integration
+
+```mermaid
+graph TD
+    A[Git Service] -->|Manage| B[Local Repo]
+    A -->|Connect| C[GitHub API]
+    C -->|Handle| D[Pull Requests]
+    D -->|Enable| E[Code Review]
+    E -->|Use| F[Monaco Diff]
+```
+
+* Git operations via simple-git
+* GitHub API integration via Octokit
+* Pull request management and review
+* Diff viewing with Monaco editor
+* AI-powered commit suggestions
+
+```typescript
+// Example Git Integration
+export class GitService {
+  private git: SimpleGit;
+  private octokit: Octokit;
+
+  async reviewPullRequest(pr: number): Promise<void> {
+    const changes = await this.getPRChanges(pr);
+    const review = await this.ai.reviewCode(changes);
+    
+    await this.octokit.pulls.createReview({
+      owner: this.owner,
+      repo: this.repo,
+      pull_number: pr,
+      body: review.summary,
+      comments: review.comments
+    });
+  }
+}
+```
+
 ## 3. Product Requirements (MVP)
 
 | #  | Requirement                               | Acceptance Test                                                         |
@@ -231,9 +468,11 @@ gantt
 
 ## 6. Open Questions
 
-1. Will we support real-time multi-cursor for Editor.js out of the box?
+1. Will we support real-time multi-cursor for TipTap out of the box?
 2. How granular should file permissions be (per-file vs project-wide)?
 3. Preferred AI model fallbacks if GPT-4 budget exceeded?
+4. How should we handle offline editing and sync conflicts?
+5. What's the storage strategy for document version history?
 
 ## 7. Implementation Strategy
 
